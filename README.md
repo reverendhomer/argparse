@@ -1,4 +1,4 @@
-# argparse [![Build Status](https://travis-ci.org/cofyc/argparse.png)](https://travis-ci.org/cofyc/argparse)
+# argparse [![Build Status](https://travis-ci.org/reverendhomer/argparse.png)](https://travis-ci.org/reverendhomer/argparse)
 
 argparse - A command line arguments parsing library in C (compatible with C++).
 
