@@ -258,7 +258,7 @@ argparse_usage(struct argparse *self)
     for (; options->type != ARGPARSE_OPT_END; options++) {
         size_t len = 0;
         if ((options)->short_name) {
-            if ((options)->long_name) len += 2; // separator ", "
+            if ((options)->long_name) len += sizeof(", ");
             len += 2;
         }
         if ((options)->long_name) {
@@ -280,9 +280,7 @@ argparse_usage(struct argparse *self)
         size_t pos = 0;
         int pad    = 0;
         if (options->type == ARGPARSE_OPT_GROUP) {
-            fputc('\n', stdout);
-            fprintf(stdout, "%s", options->help);
-            fputc('\n', stdout);
+            fprintf(stdout, "\n%s\n", options->help);
             continue;
         }
         pos = fprintf(stdout, "    ");
