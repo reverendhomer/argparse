@@ -51,18 +51,13 @@ argparse_getvalue(struct argparse *self, const struct argparse_option *opt,
     if (!opt->value) goto skipped;
     switch (opt->type) {
     case ARGPARSE_OPT_BOOLEAN:
-        if (flags & OPT_UNSET)
-            *(int *)opt->value = *(int *)opt->value - 1;
-        else
-            *(int *)opt->value = *(int *)opt->value + 1;
-        if (*(int *)opt->value < 0)
-            *(int *)opt->value = 0;
+        if (flags & OPT_UNSET) *(int *)opt->value -= 1;
+        else                   *(int *)opt->value += 1;
+        if (*(int *)opt->value < 0) *(int *)opt->value = 0;
         break;
     case ARGPARSE_OPT_BIT:
-        if (flags & OPT_UNSET)
-            *(int *)opt->value &= ~opt->data;
-        else
-            *(int *)opt->value |= opt->data;
+        if (flags & OPT_UNSET) *(int *)opt->value &= ~opt->data;
+        else                   *(int *)opt->value |= opt->data;
         break;
     case ARGPARSE_OPT_STRING:
         if (self->optvalue) {
@@ -93,7 +88,7 @@ argparse_getvalue(struct argparse *self, const struct argparse_option *opt,
         errno = 0; 
         if (self->optvalue) {
             *(float *)opt->value = strtof(self->optvalue, (char **)&s);
-            self->optvalue     = NULL;
+            self->optvalue       = NULL;
         } else if (self->argc > 1) {
             self->argc--;
             *(float *)opt->value = strtof(*++self->argv, (char **)&s);
@@ -222,7 +217,6 @@ argparse_parse(struct argparse *self, int argc, const char **argv)
         // short option
         if (arg[1] != '-') {
             self->optvalue = arg + 1;
-            //if (argparse_short_opt(self, self->options) == -2) goto unknown;
             while (self->optvalue)
                 if (argparse_short_opt(self, self->options) == -2) goto unknown;
             continue;
@@ -256,7 +250,6 @@ argparse_usage(struct argparse *self)
 {
     const struct argparse_option *options;
     size_t usage_opts_width = 0;
-    size_t len;
 
     if (self->usages) {
         fprintf(stdout, "Usage: %s\n", *self->usages++);
@@ -272,7 +265,7 @@ argparse_usage(struct argparse *self)
     options = self->options;
     // figure out best width
     for (; options->type != ARGPARSE_OPT_END; options++) {
-        len = 0;
+        size_t len = 0;
         if ((options)->short_name) {
             if ((options)->long_name) len += 2; // separator ", "
             len += 2;
@@ -286,7 +279,7 @@ argparse_usage(struct argparse *self)
         case ARGPARSE_OPT_STRING:  len += sizeof("=<str>"); break;
         default:                   break;
         }
-        len = (len + 3) - ((len + 3) & 3);
+        len += 4 - len % 4; // increase to the next divisor of 4
         if (usage_opts_width < len) usage_opts_width = len;
     }
     usage_opts_width += 4;      // 4 spaces prefix
