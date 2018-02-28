@@ -38,7 +38,7 @@ static int
 argparse_getvalue(struct argparse *self, const struct argparse_option *opt,
                   int flags)
 {
-    const char *s = NULL;
+    char *end = NULL;
     if (!opt->value) goto skipped;
     switch (opt->type) {
     case ARGPARSE_OPT_BOOLEAN:
@@ -62,31 +62,31 @@ argparse_getvalue(struct argparse *self, const struct argparse_option *opt,
     case ARGPARSE_OPT_INTEGER:
         errno = 0; 
         if (self->optvalue) {
-            *(int *)opt->value = strtol(self->optvalue, (char **)&s, 0);
+            *(int *)opt->value = strtol(self->optvalue, &end, 0);
             self->optvalue     = NULL;
         } else if (self->argc > 1) {
             self->argc--;
-            *(int *)opt->value = strtol(*++self->argv, (char **)&s, 0);
+            *(int *)opt->value = strtol(*++self->argv, &end, 0);
         } else
             argparse_error(self, opt, "requires a value", flags);
         if (errno) 
             argparse_error(self, opt, strerror(errno), flags);
-        if (s[0] != '\0')
+        if (end[0] != '\0')
             argparse_error(self, opt, "expects an integer value", flags);
         break;
     case ARGPARSE_OPT_FLOAT:
         errno = 0; 
         if (self->optvalue) {
-            *(float *)opt->value = strtof(self->optvalue, (char **)&s);
+            *(float *)opt->value = strtof(self->optvalue, &end);
             self->optvalue       = NULL;
         } else if (self->argc > 1) {
             self->argc--;
-            *(float *)opt->value = strtof(*++self->argv, (char **)&s);
+            *(float *)opt->value = strtof(*++self->argv, &end);
         } else
             argparse_error(self, opt, "requires a value", flags);
         if (errno) 
             argparse_error(self, opt, strerror(errno), flags);
-        if (s[0] != '\0')
+        if (end[0] != '\0')
             argparse_error(self, opt, "expects a numerical value", flags);
         break;
     default:
