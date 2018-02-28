@@ -22,12 +22,6 @@ prefix_skip(const char *str, const char *prefix)
     return strncmp(str, prefix, len) ? NULL : str + len;
 }
 
-static int
-prefix_cmp(const char *str, const char *prefix)
-{
-    return strncmp(prefix, str, strlen(prefix));
-}
-
 static void
 argparse_error(struct argparse *self, const struct argparse_option *opt,
                const char *reason, int flags)
@@ -156,7 +150,7 @@ argparse_long_opt(struct argparse *self, const struct argparse_option *options)
                 ARGPARSE_OPT_BIT)
                 continue;
 
-            if (prefix_cmp(self->argv[0] + 2, "no-"))
+            if (strncmp(self->argv[0] + 2, "no-", 3))
                 continue;
             rest = prefix_skip(self->argv[0] + 2 + 3, options->long_name);
             if (!rest)
