@@ -25,12 +25,10 @@ prefix_skip(const char *str, const char *prefix)
 static int
 prefix_cmp(const char *str, const char *prefix)
 {
-    for (;; str++, prefix++)
-        if (!*prefix) {
-            return 0;
-        } else if (*str != *prefix) {
+    for (; *prefix; str++, prefix++)
+        if (*str != *prefix)
             return (unsigned char)*prefix - (unsigned char)*str;
-        }
+    return 0;
 }
 
 static void
@@ -38,11 +36,10 @@ argparse_error(struct argparse *self, const struct argparse_option *opt,
                const char *reason, int flags)
 {
     (void)self;
-    if (flags & OPT_LONG) {
+    if (flags & OPT_LONG)
         fprintf(stderr, "error: option `--%s` %s\n", opt->long_name, reason);
-    } else {
+    else
         fprintf(stderr, "error: option `-%c` %s\n", opt->short_name, reason);
-    }
     exit(1);
 }
 
@@ -51,25 +48,21 @@ argparse_getvalue(struct argparse *self, const struct argparse_option *opt,
                   int flags)
 {
     const char *s = NULL;
-    if (!opt->value)
-        goto skipped;
+    if (!opt->value) goto skipped;
     switch (opt->type) {
     case ARGPARSE_OPT_BOOLEAN:
-        if (flags & OPT_UNSET) {
+        if (flags & OPT_UNSET)
             *(int *)opt->value = *(int *)opt->value - 1;
-        } else {
+        else
             *(int *)opt->value = *(int *)opt->value + 1;
-        }
-        if (*(int *)opt->value < 0) {
+        if (*(int *)opt->value < 0)
             *(int *)opt->value = 0;
-        }
         break;
     case ARGPARSE_OPT_BIT:
-        if (flags & OPT_UNSET) {
+        if (flags & OPT_UNSET)
             *(int *)opt->value &= ~opt->data;
-        } else {
+        else
             *(int *)opt->value |= opt->data;
-        }
         break;
     case ARGPARSE_OPT_STRING:
         if (self->optvalue) {
@@ -78,9 +71,8 @@ argparse_getvalue(struct argparse *self, const struct argparse_option *opt,
         } else if (self->argc > 1) {
             self->argc--;
             *(const char **)opt->value = *++self->argv;
-        } else {
+        } else
             argparse_error(self, opt, "requires a value", flags);
-        }
         break;
     case ARGPARSE_OPT_INTEGER:
         errno = 0; 
@@ -90,9 +82,8 @@ argparse_getvalue(struct argparse *self, const struct argparse_option *opt,
         } else if (self->argc > 1) {
             self->argc--;
             *(int *)opt->value = strtol(*++self->argv, (char **)&s, 0);
-        } else {
+        } else
             argparse_error(self, opt, "requires a value", flags);
-        }
         if (errno) 
             argparse_error(self, opt, strerror(errno), flags);
         if (s[0] != '\0')
@@ -106,9 +97,8 @@ argparse_getvalue(struct argparse *self, const struct argparse_option *opt,
         } else if (self->argc > 1) {
             self->argc--;
             *(float *)opt->value = strtof(*++self->argv, (char **)&s);
-        } else {
+        } else
             argparse_error(self, opt, "requires a value", flags);
-        }
         if (errno) 
             argparse_error(self, opt, strerror(errno), flags);
         if (s[0] != '\0')
@@ -119,9 +109,8 @@ argparse_getvalue(struct argparse *self, const struct argparse_option *opt,
     }
 
 skipped:
-    if (opt->callback) {
+    if (opt->callback)
         return opt->callback(self, opt);
-    }
 
     return 0;
 }
@@ -131,7 +120,6 @@ argparse_options_check(const struct argparse_option *options)
 {
     for (; options->type != ARGPARSE_OPT_END; options++) {
         switch (options->type) {
-        case ARGPARSE_OPT_END:
         case ARGPARSE_OPT_BOOLEAN:
         case ARGPARSE_OPT_BIT:
         case ARGPARSE_OPT_INTEGER:
@@ -149,12 +137,11 @@ argparse_options_check(const struct argparse_option *options)
 static int
 argparse_short_opt(struct argparse *self, const struct argparse_option *options)
 {
-    for (; options->type != ARGPARSE_OPT_END; options++) {
+    for (; options->type != ARGPARSE_OPT_END; options++)
         if (options->short_name == *self->optvalue) {
             self->optvalue = self->optvalue[1] ? self->optvalue + 1 : NULL;
             return argparse_getvalue(self, options, 0);
         }
-    }
     return -2;
 }
 
@@ -170,18 +157,15 @@ argparse_long_opt(struct argparse *self, const struct argparse_option *options)
         rest = prefix_skip(self->argv[0] + 2, options->long_name);
         if (!rest) {
             // negation disabled?
-            if (options->flags & OPT_NONEG) {
+            if (options->flags & OPT_NONEG)
                 continue;
-            }
             // only OPT_BOOLEAN/OPT_BIT supports negation
             if (options->type != ARGPARSE_OPT_BOOLEAN && options->type !=
-                ARGPARSE_OPT_BIT) {
+                ARGPARSE_OPT_BIT)
                 continue;
-            }
 
-            if (prefix_cmp(self->argv[0] + 2, "no-")) {
+            if (prefix_cmp(self->argv[0] + 2, "no-"))
                 continue;
-            }
             rest = prefix_skip(self->argv[0] + 2 + 3, options->long_name);
             if (!rest)
                 continue;
@@ -230,9 +214,7 @@ argparse_parse(struct argparse *self, int argc, const char **argv)
     for (; self->argc; self->argc--, self->argv++) {
         const char *arg = self->argv[0];
         if (arg[0] != '-' || !arg[1]) {
-            if (self->flags & ARGPARSE_STOP_AT_NON_OPTION) {
-                goto end;
-            }
+            if (self->flags & ARGPARSE_STOP_AT_NON_OPTION) goto end;
             // if it's not option or is a single char '-', copy verbatim
             self->out[self->cpidx++] = self->argv[0];
             continue;
@@ -240,20 +222,9 @@ argparse_parse(struct argparse *self, int argc, const char **argv)
         // short option
         if (arg[1] != '-') {
             self->optvalue = arg + 1;
-            switch (argparse_short_opt(self, self->options)) {
-            case -1:
-                break;
-            case -2:
-                goto unknown;
-            }
-            while (self->optvalue) {
-                switch (argparse_short_opt(self, self->options)) {
-                case -1:
-                    break;
-                case -2:
-                    goto unknown;
-                }
-            }
+            //if (argparse_short_opt(self, self->options) == -2) goto unknown;
+            while (self->optvalue)
+                if (argparse_short_opt(self, self->options) == -2) goto unknown;
             continue;
         }
         // if '--' presents
@@ -263,12 +234,7 @@ argparse_parse(struct argparse *self, int argc, const char **argv)
             break;
         }
         // long option
-        switch (argparse_long_opt(self, self->options)) {
-        case -1:
-            break;
-        case -2:
-            goto unknown;
-        }
+        if (argparse_long_opt(self, self->options) == -2) goto unknown;
         continue;
 
 unknown:
@@ -288,49 +254,40 @@ end:
 void
 argparse_usage(struct argparse *self)
 {
+    const struct argparse_option *options;
+    size_t usage_opts_width = 0;
+    size_t len;
+
     if (self->usages) {
         fprintf(stdout, "Usage: %s\n", *self->usages++);
         while (*self->usages && **self->usages)
             fprintf(stdout, "   or: %s\n", *self->usages++);
-    } else {
+    } else
         fprintf(stdout, "Usage:\n");
-    }
 
     // print description
-    if (self->description)
-        fprintf(stdout, "%s\n", self->description);
+    if (self->description) fprintf(stdout, "%s\n", self->description);
 
     fputc('\n', stdout);
-
-    const struct argparse_option *options;
-
-    // figure out best width
-    size_t usage_opts_width = 0;
-    size_t len;
     options = self->options;
+    // figure out best width
     for (; options->type != ARGPARSE_OPT_END; options++) {
         len = 0;
         if ((options)->short_name) {
+            if ((options)->long_name) len += 2; // separator ", "
             len += 2;
-        }
-        if ((options)->short_name && (options)->long_name) {
-            len += 2;           // separator ", "
         }
         if ((options)->long_name) {
             len += strlen((options)->long_name) + 2;
         }
-        if (options->type == ARGPARSE_OPT_INTEGER) {
-            len += strlen("=<int>");
-		  }
-        if (options->type == ARGPARSE_OPT_FLOAT) {
-            len += strlen("=<flt>");
-        } else if (options->type == ARGPARSE_OPT_STRING) {
-            len += strlen("=<str>");
+        switch (options->type) {
+        case ARGPARSE_OPT_INTEGER: len += sizeof("=<int>"); break;
+        case ARGPARSE_OPT_FLOAT:   len += sizeof("=<flt>"); break;
+        case ARGPARSE_OPT_STRING:  len += sizeof("=<str>"); break;
+        default:                   break;
         }
         len = (len + 3) - ((len + 3) & 3);
-        if (usage_opts_width < len) {
-            usage_opts_width = len;
-        }
+        if (usage_opts_width < len) usage_opts_width = len;
     }
     usage_opts_width += 4;      // 4 spaces prefix
 
@@ -347,24 +304,19 @@ argparse_usage(struct argparse *self)
         pos = fprintf(stdout, "    ");
         if (options->short_name) {
             pos += fprintf(stdout, "-%c", options->short_name);
+            if (options->long_name) pos += fprintf(stdout, ", ");
         }
-        if (options->long_name && options->short_name) {
-            pos += fprintf(stdout, ", ");
-        }
-        if (options->long_name) {
+        if (options->long_name)
             pos += fprintf(stdout, "--%s", options->long_name);
+        switch (options->type) {
+        case ARGPARSE_OPT_INTEGER: pos += fprintf(stdout, "=<int>"); break;
+        case ARGPARSE_OPT_FLOAT:   pos += fprintf(stdout, "=<flt>"); break;
+        case ARGPARSE_OPT_STRING:  pos += fprintf(stdout, "=<str>"); break;
+        default:                   break;
         }
-        if (options->type == ARGPARSE_OPT_INTEGER) {
-            pos += fprintf(stdout, "=<int>");
-        }
-        if (options->type == ARGPARSE_OPT_FLOAT) {
-            pos += fprintf(stdout, "=<flt>");
-        } else if (options->type == ARGPARSE_OPT_STRING) {
-            pos += fprintf(stdout, "=<str>");
-        }
-        if (pos <= usage_opts_width) {
+        if (pos <= usage_opts_width)
             pad = usage_opts_width - pos;
-        } else {
+        else {
             fputc('\n', stdout);
             pad = usage_opts_width;
         }
@@ -372,8 +324,7 @@ argparse_usage(struct argparse *self)
     }
 
     // print epilog
-    if (self->epilog)
-        fprintf(stdout, "%s\n", self->epilog);
+    if (self->epilog) fprintf(stdout, "%s\n", self->epilog);
 }
 
 int
