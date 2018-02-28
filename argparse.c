@@ -136,14 +136,12 @@ argparse_long_opt(struct argparse *self, const struct argparse_option *options)
     for (; options->type != ARGPARSE_OPT_END; options++) {
         const char *rest;
         int opt_flags = 0;
-        if (!options->long_name)
-            continue;
+        if (!options->long_name) continue;
 
         rest = prefix_skip(self->argv[0] + 2, options->long_name);
         if (!rest) {
             // negation disabled?
-            if (options->flags & OPT_NONEG)
-                continue;
+            if (options->flags & OPT_NONEG) continue;
             // only OPT_BOOLEAN/OPT_BIT supports negation
             if (options->type != ARGPARSE_OPT_BOOLEAN && options->type !=
                 ARGPARSE_OPT_BIT)
@@ -152,13 +150,11 @@ argparse_long_opt(struct argparse *self, const struct argparse_option *options)
             if (strncmp(self->argv[0] + 2, "no-", 3))
                 continue;
             rest = prefix_skip(self->argv[0] + 2 + 3, options->long_name);
-            if (!rest)
-                continue;
+            if (!rest) continue;
             opt_flags |= OPT_UNSET;
         }
         if (*rest) {
-            if (*rest != '=')
-                continue;
+            if (*rest != '=') continue;
             self->optvalue = rest + 1;
         }
         return argparse_getvalue(self, options, opt_flags | OPT_LONG);
@@ -260,9 +256,7 @@ argparse_usage(struct argparse *self)
             if ((options)->long_name) len += sizeof(", ");
             len += 2;
         }
-        if ((options)->long_name) {
-            len += strlen((options)->long_name) + 2;
-        }
+        if (options->long_name)  len += strlen(options->long_name) + 2;
         switch (options->type) {
         case ARGPARSE_OPT_INTEGER: len += sizeof("=<int>"); break;
         case ARGPARSE_OPT_FLOAT:   len += sizeof("=<flt>"); break;
@@ -276,8 +270,8 @@ argparse_usage(struct argparse *self)
 
     options = self->options;
     for (; options->type != ARGPARSE_OPT_END; options++) {
-        size_t pos = 0;
-        int pad    = 0;
+        size_t pos;
+        int pad;
         if (options->type == ARGPARSE_OPT_GROUP) {
             fprintf(stdout, "\n%s\n", options->help);
             continue;
@@ -303,7 +297,6 @@ argparse_usage(struct argparse *self)
         }
         fprintf(stdout, "%*s%s\n", pad + 2, "", options->help);
     }
-
     // print epilog
     if (self->epilog) fprintf(stdout, "%s\n", self->epilog);
 }
