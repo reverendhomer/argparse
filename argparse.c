@@ -23,10 +23,8 @@ prefix_skip(const char *str, const char *prefix)
 }
 
 static void
-argparse_error(struct argparse *self, const struct argparse_option *opt,
-               const char *reason, int flags)
+argparse_error(const struct argparse_option *opt, const char *reason, int flags)
 {
-    (void)self;
     if (flags & OPT_LONG)
         fprintf(stderr, "error: option `--%s` %s\n", opt->long_name, reason);
     else
@@ -57,7 +55,7 @@ argparse_getvalue(struct argparse *self, const struct argparse_option *opt,
             self->argc--;
             *(const char **)opt->value = *++self->argv;
         } else
-            argparse_error(self, opt, "requires a value", flags);
+            argparse_error(opt, "requires a value", flags);
         break;
     case ARGPARSE_OPT_INTEGER:
         errno = 0;
@@ -68,11 +66,11 @@ argparse_getvalue(struct argparse *self, const struct argparse_option *opt,
             self->argc--;
             *(int *)opt->value = strtol(*++self->argv, &end, 0);
         } else
-            argparse_error(self, opt, "requires a value", flags);
+            argparse_error(opt, "requires a value", flags);
         if (errno)
-            argparse_error(self, opt, strerror(errno), flags);
+            argparse_error(opt, strerror(errno), flags);
         if (end[0] != '\0')
-            argparse_error(self, opt, "expects an integer value", flags);
+            argparse_error(opt, "expects an integer value", flags);
         break;
     case ARGPARSE_OPT_FLOAT:
         errno = 0;
@@ -83,11 +81,11 @@ argparse_getvalue(struct argparse *self, const struct argparse_option *opt,
             self->argc--;
             *(float *)opt->value = strtof(*++self->argv, &end);
         } else
-            argparse_error(self, opt, "requires a value", flags);
+            argparse_error(opt, "requires a value", flags);
         if (errno)
-            argparse_error(self, opt, strerror(errno), flags);
+            argparse_error(opt, strerror(errno), flags);
         if (end[0] != '\0')
-            argparse_error(self, opt, "expects a numerical value", flags);
+            argparse_error(opt, "expects a numerical value", flags);
         break;
     default:
         assert(0);
