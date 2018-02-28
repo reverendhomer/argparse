@@ -25,10 +25,7 @@ prefix_skip(const char *str, const char *prefix)
 static int
 prefix_cmp(const char *str, const char *prefix)
 {
-    for (; *prefix; str++, prefix++)
-        if (*str != *prefix)
-            return (unsigned char)*prefix - (unsigned char)*str;
-    return 0;
+    return strncmp(prefix, str, strlen(prefix));
 }
 
 static void
