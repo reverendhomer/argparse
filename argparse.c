@@ -42,9 +42,8 @@ argparse_getvalue(struct argparse *self, const struct argparse_option *opt,
     if (!opt->value) goto skipped;
     switch (opt->type) {
     case ARGPARSE_OPT_BOOLEAN:
-        if (flags & OPT_UNSET) *(int *)opt->value -= 1;
-        else                   *(int *)opt->value += 1;
-        if (*(int *)opt->value < 0) *(int *)opt->value = 0;
+        if (flags & OPT_UNSET && *(int*)opt->value > 0) *(int *)opt->value -= 1;
+        else *(int *)opt->value += 1;
         break;
     case ARGPARSE_OPT_BIT:
         if (flags & OPT_UNSET) *(int *)opt->value &= ~opt->data;
